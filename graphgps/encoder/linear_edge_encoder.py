@@ -10,8 +10,7 @@ class LinearEdgeEncoder(torch.nn.Module):
         if cfg.dataset.name in ['MNIST', 'CIFAR10']:
             self.in_dim = 1
         else:
-            raise ValueError("Input edge feature dim is required to be hardset "
-                             "or refactored to use a cfg option.")
+            self.in_dim = 4
         self.encoder = torch.nn.Linear(self.in_dim, emb_dim)
 
     def forward(self, batch):
