@@ -45,10 +45,15 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
     laplacian_norm_type = cfg.posenc_LapPE.eigen.laplacian_norm.lower()
     if laplacian_norm_type == 'none':
         laplacian_norm_type = None
+      
+    # Filter edges based on the non-zero value in the first position of edge_attr: Might break compatibility with datasets other than my custom Alphafold
+    mask = data.edge_attr[:, 0].nonzero().view(-1)
+    filtered_edge_index = data.edge_index[:, mask]
+  
     if is_undirected:
-        undir_edge_index = data.edge_index
+        undir_edge_index = data.filtered_edge_index
     else:
-        undir_edge_index = to_undirected(data.edge_index)
+        undir_edge_index = to_undirected(data.filtered_edge_index)
 
     # Eigen values and vectors.
     evals, evects = None, None
