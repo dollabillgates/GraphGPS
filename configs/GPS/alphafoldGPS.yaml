@@ -7,7 +7,7 @@ dataset:
   format: PyG-Alphafold
   name: Alphafold
   task: graph
-  task_type: classification
+  task_type: classification_multilabel
   transductive: False
   node_encoder: True
   node_encoder_name: LinearNode+EquivStableLapPE
