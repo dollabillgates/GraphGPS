@@ -17,6 +17,7 @@ from torch_geometric.graphgym.register import register_loader
 from graphgps.loader.dataset.aqsol_molecules import AQSOL
 from graphgps.loader.dataset.coco_superpixels import COCOSuperpixels
 from graphgps.loader.dataset.malnet_tiny import MalNetTiny
+from graphgps.loader.dataset.alphafold import Alphafold
 from graphgps.loader.dataset.voc_superpixels import VOCSuperpixels
 from graphgps.loader.split_generator import (prepare_splits,
                                              set_dataset_splits)
@@ -105,6 +106,9 @@ def load_dataset_master(format, name, dataset_dir):
             if name != 'none':
                 raise ValueError(f"Actor class provides only one dataset.")
             dataset = Actor(dataset_dir)
+
+        elif pyg_dataset_id == 'Alphafold':
+            dataset = preformat_Alphafold(dataset_dir, name)
 
         elif pyg_dataset_id == 'GNNBenchmarkDataset':
             dataset = preformat_GNNBenchmarkDataset(dataset_dir, name)
@@ -253,7 +257,23 @@ def compute_indegree_histogram(dataset):
         deg += torch.bincount(d, minlength=deg.numel())
     return deg.numpy().tolist()[:max_degree + 1]
 
+def preformat_Alphafold(dataset_dir, name):
+    """Load and preformat custom Alphafold dataset.
+    Args:
+        dataset_dir: path where to store the cached dataset
+    Returns:
+        PyG dataset object
+    """
 
+    dataset = Alphafold(dataset_dir)
+    dataset.name = 'Alphafold'
+    split_dict = dataset.get_idx_split()
+    dataset.split_idxs = [split_dict['train'],
+                          split_dict['valid'],
+                          split_dict['test']]
+
+    return dataset
+  
 def preformat_GNNBenchmarkDataset(dataset_dir, name):
     """Load and preformat datasets from PyG's GNNBenchmarkDataset.
 
