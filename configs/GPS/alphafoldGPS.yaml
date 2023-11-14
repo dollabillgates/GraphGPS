@@ -1,8 +1,8 @@
 out_dir: results
 metric_best: ap
 wandb:
-  use: True
-  project: malnet
+  use: False
+  project: alphafold
 dataset:
   format: PyG-Alphafold
   name: Alphafold
