@@ -47,7 +47,7 @@ gnn:
   layers_post_mp: 3  # Not used when `gnn.head: san_graph`
   dim_inner: 64  # `gt.dim_hidden` must match `gnn.dim_inner`
   batchnorm: False
-  act: sigmoid
+  act: relu
   dropout: 0.0
   agg: mean
   normalize_adj: False
