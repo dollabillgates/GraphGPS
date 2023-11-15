@@ -60,6 +60,8 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
     # Eigen values and vectors.
     evals, evects = None, None
     if 'LapPE' in pe_types or 'EquivStableLapPE' in pe_types:
+        # Ensure edge indices are of type int64
+        undir_edge_index = undir_edge_index.long()
         # Convert to dense PyTorch tensor and move to GPU
         L = to_dense_adj(*get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)).squeeze(0)
         L = L.to(device='cuda')
