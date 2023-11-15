@@ -56,15 +56,13 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
     else:
         undir_edge_index = to_undirected(filtered_edge_index)
 
-    # Eigen values and vectors.
+   # Eigen values and vectors.
     evals, evects = None, None
     if 'LapPE' in pe_types or 'EquivStableLapPE' in pe_types:
-        # Convert to scipy sparse matrix
-        L = to_scipy_sparse_matrix(
-            *get_laplacian(undir_edge_index, normalization=laplacian_norm_type,
-                           num_nodes=N)
-        )
-    
+        # Convert to dense PyTorch tensor and move to GPU
+        L = to_dense_adj(*get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)).squeeze(0)
+        L = L.to(device='cuda' if torch.cuda.is_available() else 'cpu')
+
         # Determine max_freqs and eigvec_norm based on PE type
         if 'LapPE' in pe_types:
             max_freqs = cfg.posenc_LapPE.eigen.max_freqs
@@ -72,13 +70,11 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
         elif 'EquivStableLapPE' in pe_types:
             max_freqs = cfg.posenc_EquivStableLapPE.eigen.max_freqs
             eigvec_norm = cfg.posenc_EquivStableLapPE.eigen.eigvec_norm
-        
+
         # Compute only the smallest max_freqs eigenvalues and eigenvectors
-        evals, evects = eigsh(L, k=max_freqs, which='SM')
-    
-        # Ensure real values for eigenvalues and eigenvectors
-        evals, evects = np.real(evals), np.real(evects)
-    
+        evals, evects = torch.linalg.eigh(L)
+        evals, evects = evals[:max_freqs], evects[:, :max_freqs]
+
         data.EigVals, data.EigVecs = get_lap_decomp_stats(
             evals=evals, evects=evects,
             max_freqs=max_freqs,
