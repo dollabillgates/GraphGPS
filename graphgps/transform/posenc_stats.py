@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from numpy.linalg import eigvals
-from scipy.sparse.linalg import eigsh
+from torch.linalg import eigsh
 from torch_geometric.utils import (get_laplacian, to_scipy_sparse_matrix,
                                    to_undirected, to_dense_adj, scatter)
 from torch_geometric.utils.num_nodes import maybe_num_nodes
@@ -152,27 +152,20 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
 
     return data
 
-
 def get_lap_decomp_stats(evals, evects, max_freqs, eigvec_norm='L2'):
     """Compute Laplacian eigen-decomposition-based PE stats of the given graph.
 
     Args:
         evals, evects: Precomputed eigen-decomposition
-        max_freqs: Maximum number of top smallest frequencies / eigenvecs to use
+        max_freqs: Maximum number of top smallest frequencies / eigenvecs for padding
         eigvec_norm: Normalization for the eigen vectors of the Laplacian
     Returns:
         Tensor (num_nodes, max_freqs, 1) eigenvalues repeated for each node
         Tensor (num_nodes, max_freqs) of eigenvector values per node
     """
-    N = len(evals)  # Number of nodes, including disconnected nodes.
-
-    # Keep up to the maximum desired number of frequencies.
-    idx = evals.argsort()[:max_freqs]
-    evals, evects = evals[idx], np.real(evects[:, idx])
-    evals = torch.from_numpy(np.real(evals)).clamp_min(0)
+    N = evals.size(0)  # Number of nodes, including disconnected nodes.
 
     # Normalize and pad eigen vectors.
-    evects = torch.from_numpy(evects).float()
     evects = eigvec_normalizer(evects, evals, normalization=eigvec_norm)
     if N < max_freqs:
         EigVecs = F.pad(evects, (0, max_freqs - N), value=float('nan'))
@@ -187,7 +180,6 @@ def get_lap_decomp_stats(evals, evects, max_freqs, eigvec_norm='L2'):
     EigVals = EigVals.repeat(N, 1).unsqueeze(2)
 
     return EigVals, EigVecs
-
 
 def get_rw_landing_probs(ksteps, edge_index, edge_weight=None,
                          num_nodes=None, space_dim=0):
