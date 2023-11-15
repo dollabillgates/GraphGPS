@@ -27,45 +27,71 @@ from graphgps.transform.transforms import (pre_transform_in_memory,
                                            typecast_x, concat_x_and_pos,
                                            clip_graphs_to_size)
 
-
+# Adjust logging
 def log_loaded_dataset(dataset, format, name):
     logging.info(f"[*] Loaded dataset '{name}' from '{format}':")
-    logging.info(f"  {dataset.data}")
-    logging.info(f"  undirected: {dataset[0].is_undirected()}")
     logging.info(f"  num graphs: {len(dataset)}")
-
-    total_num_nodes = 0
-    if hasattr(dataset.data, 'num_nodes'):
-        total_num_nodes = dataset.data.num_nodes
-    elif hasattr(dataset.data, 'x'):
-        total_num_nodes = dataset.data.x.size(0)
-    logging.info(f"  avg num_nodes/graph: "
-                 f"{total_num_nodes // len(dataset)}")
+    logging.info(f"  undirected: {dataset[0].is_undirected()}")
     logging.info(f"  num node features: {dataset.num_node_features}")
     logging.info(f"  num edge features: {dataset.num_edge_features}")
+
+    total_num_nodes = 0
+    num_classes_set = set()
+    for data in dataset:
+        total_num_nodes += data.num_nodes
+        if hasattr(data, 'y') and data.y is not None:
+            num_classes_set.update(data.y.tolist())
+
+    avg_num_nodes = total_num_nodes // len(dataset)
+    logging.info(f"  avg num_nodes/graph: {avg_num_nodes}")
+
     if hasattr(dataset, 'num_tasks'):
         logging.info(f"  num tasks: {dataset.num_tasks}")
 
-    if hasattr(dataset.data, 'y') and dataset.data.y is not None:
-        if isinstance(dataset.data.y, list):
-            # A special case for ogbg-code2 dataset.
-            logging.info(f"  num classes: n/a")
-        elif dataset.data.y.numel() == dataset.data.y.size(0) and \
-                torch.is_floating_point(dataset.data.y):
-            logging.info(f"  num classes: (appears to be a regression task)")
-        else:
-            logging.info(f"  num classes: {dataset.num_classes}")
-    elif hasattr(dataset.data, 'train_edge_label') or hasattr(dataset.data, 'edge_label'):
-        # Edge/link prediction task.
-        if hasattr(dataset.data, 'train_edge_label'):
-            labels = dataset.data.train_edge_label  # Transductive link task
-        else:
-            labels = dataset.data.edge_label  # Inductive link task
-        if labels.numel() == labels.size(0) and \
-                torch.is_floating_point(labels):
-            logging.info(f"  num edge classes: (probably a regression task)")
-        else:
-            logging.info(f"  num edge classes: {len(torch.unique(labels))}")
+    if num_classes_set:
+        num_classes = len(num_classes_set)
+        logging.info(f"  num classes: {num_classes}")
+    else:
+        logging.info("  y attribute not found or empty in the dataset")
+
+# def log_loaded_dataset(dataset, format, name):
+#     logging.info(f"[*] Loaded dataset '{name}' from '{format}':")
+#     logging.info(f"  {dataset.data}")
+#     logging.info(f"  undirected: {dataset[0].is_undirected()}")
+#     logging.info(f"  num graphs: {len(dataset)}")
+
+#     total_num_nodes = 0
+#     if hasattr(dataset.data, 'num_nodes'):
+#         total_num_nodes = dataset.data.num_nodes
+#     elif hasattr(dataset.data, 'x'):
+#         total_num_nodes = dataset.data.x.size(0)
+#     logging.info(f"  avg num_nodes/graph: "
+#                  f"{total_num_nodes // len(dataset)}")
+#     logging.info(f"  num node features: {dataset.num_node_features}")
+#     logging.info(f"  num edge features: {dataset.num_edge_features}")
+#     if hasattr(dataset, 'num_tasks'):
+#         logging.info(f"  num tasks: {dataset.num_tasks}")
+
+#     if hasattr(dataset.data, 'y') and dataset.data.y is not None:
+#         if isinstance(dataset.data.y, list):
+#             # A special case for ogbg-code2 dataset.
+#             logging.info(f"  num classes: n/a")
+#         elif dataset.data.y.numel() == dataset.data.y.size(0) and \
+#                 torch.is_floating_point(dataset.data.y):
+#             logging.info(f"  num classes: (appears to be a regression task)")
+#         else:
+#             logging.info(f"  num classes: {dataset.num_classes}")
+#     elif hasattr(dataset.data, 'train_edge_label') or hasattr(dataset.data, 'edge_label'):
+#         # Edge/link prediction task.
+#         if hasattr(dataset.data, 'train_edge_label'):
+#             labels = dataset.data.train_edge_label  # Transductive link task
+#         else:
+#             labels = dataset.data.edge_label  # Inductive link task
+#         if labels.numel() == labels.size(0) and \
+#                 torch.is_floating_point(labels):
+#             logging.info(f"  num edge classes: (probably a regression task)")
+#         else:
+#             logging.info(f"  num edge classes: {len(torch.unique(labels))}")
 
     ## Show distribution of graph sizes.
     # graph_sizes = [d.num_nodes if hasattr(d, 'num_nodes') else d.x.shape[0]
