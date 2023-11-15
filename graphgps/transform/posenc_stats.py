@@ -62,7 +62,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
         # Get Laplacian in sparse format
         edge_index, edge_weight = get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)
         
-        # Convert to CuPy sparse matrix
+        # Convert to CuPy sparse matrix and move to gpu
         L = cupyx.scipy.sparse.coo_matrix((edge_weight.cpu().numpy(), 
                                                        edge_index.cpu().numpy()), 
                                                       shape=(N, N)).tocsr()
