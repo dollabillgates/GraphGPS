@@ -108,7 +108,7 @@ def load_dataset_master(format, name, dataset_dir):
             dataset = Actor(dataset_dir)
 
         elif pyg_dataset_id == 'Alphafold':
-            dataset = preformat_Alphafold(dataset_dir, name)
+            dataset = preformat_Alphafold(name)
 
         elif pyg_dataset_id == 'GNNBenchmarkDataset':
             dataset = preformat_GNNBenchmarkDataset(dataset_dir, name)
