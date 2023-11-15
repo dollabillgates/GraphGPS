@@ -257,15 +257,9 @@ def compute_indegree_histogram(dataset):
         deg += torch.bincount(d, minlength=deg.numel())
     return deg.numpy().tolist()[:max_degree + 1]
 
-def preformat_Alphafold(dataset_dir, name):
-    """Load and preformat custom Alphafold dataset.
-    Args:
-        dataset_dir: path where to store the cached dataset
-    Returns:
-        PyG dataset object
-    """
-
-    dataset = Alphafold(dataset_dir)
+def preformat_Alphafold(name):
+    # Load and preformat custom Alphafold dataset.
+    dataset = Alphafold()
     dataset.name = 'Alphafold'
     split_dict = dataset.get_idx_split()
     dataset.split_idxs = [split_dict['train'],
