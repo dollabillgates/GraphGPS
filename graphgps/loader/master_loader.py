@@ -184,7 +184,7 @@ def load_dataset_master(format, name, dataset_dir):
     else:
         raise ValueError(f"Unknown data format: {format}")
 
-    pre_transform_in_memory(dataset, partial(task_specific_preprocessing, cfg=cfg))
+    # pre_transform_in_memory(dataset, partial(task_specific_preprocessing, cfg=cfg))
 
     log_loaded_dataset(dataset, format, name)
 
