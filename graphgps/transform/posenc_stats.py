@@ -62,13 +62,12 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
         # Get Laplacian in sparse format
         edge_index, edge_weight = get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)
         
-        # Assuming edge_index is of shape [2, E] and edge_weight is of shape [E,]
-        row_indices = edge_index[0].cpu().numpy()  # First row of edge_index for source nodes
-        col_indices = edge_index[1].cpu().numpy()  # Second row of edge_index for target nodes
-        edge_weights = edge_weight.cpu().numpy()   # Edge weights
+        # Convert the PyTorch tensors to CuPy arrays
+        edge_index_cupy = cp.asarray(edge_index.cpu())
+        edge_weight_cupy = cp.asarray(edge_weight.cpu())
         
-        # Create the COO matrix
-        L = cupyx.scipy.sparse.coo_matrix((edge_weights, (row_indices, col_indices)), shape=(N, N)).tocsr()
+        # Create the COO matrix directly using CuPy arrays
+        L = cupyx.scipy.sparse.coo_matrix((edge_weight_cupy, (edge_index_cupy[0], edge_index_cupy[1])), shape=(N, N)).tocsr()
         L = L.to(device='cuda')
     
         # Determine max_freqs and eigvec_norm based on PE type
