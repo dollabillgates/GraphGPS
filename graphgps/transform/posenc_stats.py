@@ -64,12 +64,11 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
         edge_index, edge_weight = get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)
         
         # Convert the PyTorch tensors to CuPy arrays
-        edge_index_cupy = cp.asarray(edge_index.cpu())
-        edge_weight_cupy = cp.asarray(edge_weight.cpu())
+        edge_index_cupy = cp.asarray(edge_index)
+        edge_weight_cupy = cp.asarray(edge_weight)
         
         # Create the COO matrix directly using CuPy arrays
         L = cupyx.scipy.sparse.coo_matrix((edge_weight_cupy, (edge_index_cupy[0], edge_index_cupy[1])), shape=(N, N)).tocsr()
-        L = L.to(device='cuda')
     
         # Determine max_freqs and eigvec_norm based on PE type
         if 'LapPE' in pe_types:
