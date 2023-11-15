@@ -100,7 +100,7 @@ def load_dataset_master(format, name, dataset_dir):
     """
     if format.startswith('PyG-'):
         pyg_dataset_id = format.split('-', 1)[1]
-        dataset_dir = osp.join(dataset_dir, pyg_dataset_id)
+        # dataset_dir = osp.join(dataset_dir, pyg_dataset_id)
 
         if pyg_dataset_id == 'Actor':
             if name != 'none':
@@ -274,7 +274,7 @@ def preformat_Alphafold(dataset_dir, name):
 
     return dataset
   
-def preformat_GNNBenchmarkDataset(dataset_dir, name):
+def preformat_GNNBenchmarkDataset(name):
     """Load and preformat datasets from PyG's GNNBenchmarkDataset.
 
     Args:
