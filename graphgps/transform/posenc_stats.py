@@ -4,7 +4,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from numpy.linalg import eigvals
-import cupyx as cp
+import cupyx
+import cupy as cp
 from torch_geometric.utils import (get_laplacian, to_scipy_sparse_matrix,
                                    to_undirected, to_dense_adj, scatter)
 from torch_geometric.utils.num_nodes import maybe_num_nodes
@@ -67,7 +68,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
         edge_weight_cupy = cp.asarray(edge_weight.cpu())
         
         # Create the COO matrix directly using CuPy arrays
-        L = cp.scipy.sparse.coo_matrix((edge_weight_cupy, (edge_index_cupy[0], edge_index_cupy[1])), shape=(N, N)).tocsr()
+        L = cupyx.scipy.sparse.coo_matrix((edge_weight_cupy, (edge_index_cupy[0], edge_index_cupy[1])), shape=(N, N)).tocsr()
         L = L.to(device='cuda')
     
         # Determine max_freqs and eigvec_norm based on PE type
@@ -79,7 +80,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
             eigvec_norm = cfg.posenc_EquivStableLapPE.eigen.eigvec_norm
     
         # Compute only the smallest max_freqs eigenvalues and eigenvectors
-        evals_cupy, evects_cupy = cp.scipy.sparse.linalg.eigsh(L, k=max_freqs, which='SM')
+        evals_cupy, evects_cupy = cupyx.scipy.sparse.linalg.eigsh(L, k=max_freqs, which='SM')
     
         # Convert the results back to PyTorch tensors
         evals = torch.from_numpy(evals_cupy)
