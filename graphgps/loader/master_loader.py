@@ -36,11 +36,14 @@ def log_loaded_dataset(dataset, format, name):
     logging.info(f"  num edge features: {dataset.num_edge_features}")
 
     total_num_nodes = 0
-    num_classes_set = set()
+    num_classes = None
     for data in dataset:
         total_num_nodes += data.num_nodes
         if hasattr(data, 'y') and data.y is not None:
-            num_classes_set.update(data.y.tolist())
+            if num_classes is None:
+                num_classes = data.y.shape[0]
+            elif num_classes != data.y.shape[0]:
+                logging.warning(f"Inconsistent class size found: {data.y.shape[0]} instead of {num_classes}")
 
     avg_num_nodes = total_num_nodes // len(dataset)
     logging.info(f"  avg num_nodes/graph: {avg_num_nodes}")
@@ -48,12 +51,11 @@ def log_loaded_dataset(dataset, format, name):
     if hasattr(dataset, 'num_tasks'):
         logging.info(f"  num tasks: {dataset.num_tasks}")
 
-    if num_classes_set:
-        num_classes = len(num_classes_set)
+    if num_classes is not None:
         logging.info(f"  num classes: {num_classes}")
     else:
         logging.info("  y attribute not found or empty in the dataset")
-
+    
 # def log_loaded_dataset(dataset, format, name):
 #     logging.info(f"[*] Loaded dataset '{name}' from '{format}':")
 #     logging.info(f"  {dataset.data}")
