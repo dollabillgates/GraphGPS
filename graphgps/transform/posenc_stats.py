@@ -61,7 +61,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
     if 'LapPE' in pe_types or 'EquivStableLapPE' in pe_types:
         # Convert to dense PyTorch tensor and move to GPU
         L = to_dense_adj(*get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)).squeeze(0)
-        L = L.to(device='cuda' if torch.cuda.is_available() else 'cpu')
+        L = L.to(device='cuda')
 
         # Determine max_freqs and eigvec_norm based on PE type
         if 'LapPE' in pe_types:
