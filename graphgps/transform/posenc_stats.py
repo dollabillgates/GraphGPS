@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from numpy.linalg import eigvals
-from torch.linalg import eigsh
+from torch.linalg import eigvalsh
 from torch_geometric.utils import (get_laplacian, to_scipy_sparse_matrix,
                                    to_undirected, to_dense_adj, scatter)
 from torch_geometric.utils.num_nodes import maybe_num_nodes
@@ -72,7 +72,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
             eigvec_norm = cfg.posenc_EquivStableLapPE.eigen.eigvec_norm
 
         # Compute only the smallest max_freqs eigenvalues and eigenvectors
-        evals, evects = torch.linalg.eigh(L)
+        evals, evects = eigvalsh(L)
         evals, evects = evals[:max_freqs], evects[:, :max_freqs]
 
         data.EigVals, data.EigVecs = get_lap_decomp_stats(
