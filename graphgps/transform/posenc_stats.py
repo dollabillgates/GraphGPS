@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from numpy.linalg import eigvals
-from torch.linalg import eigvalsh
+import cupy as cp
 from torch_geometric.utils import (get_laplacian, to_scipy_sparse_matrix,
                                    to_undirected, to_dense_adj, scatter)
 from torch_geometric.utils.num_nodes import maybe_num_nodes
@@ -56,29 +56,37 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
     else:
         undir_edge_index = to_undirected(filtered_edge_index)
 
-   # Eigen values and vectors.
-    evals, evects = None, None
-    if 'LapPE' in pe_types or 'EquivStableLapPE' in pe_types:
-        # Convert to dense PyTorch tensor and move to GPU
-        L = to_dense_adj(*get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)).squeeze(0)
-        L = L.to(device='cuda')
+   
+# Eigen values and vectors.
+evals, evects = None, None
+if 'LapPE' in pe_types or 'EquivStableLapPE' in pe_types:
+    # Convert to dense PyTorch tensor and move to GPU
+    L = to_dense_adj(*get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)).squeeze(0)
+    L = L.to(device='cuda')
 
-        # Determine max_freqs and eigvec_norm based on PE type
-        if 'LapPE' in pe_types:
-            max_freqs = cfg.posenc_LapPE.eigen.max_freqs
-            eigvec_norm = cfg.posenc_LapPE.eigen.eigvec_norm
-        elif 'EquivStableLapPE' in pe_types:
-            max_freqs = cfg.posenc_EquivStableLapPE.eigen.max_freqs
-            eigvec_norm = cfg.posenc_EquivStableLapPE.eigen.eigvec_norm
+    # Determine max_freqs and eigvec_norm based on PE type
+    if 'LapPE' in pe_types:
+        max_freqs = cfg.posenc_LapPE.eigen.max_freqs
+        eigvec_norm = cfg.posenc_LapPE.eigen.eigvec_norm
+    elif 'EquivStableLapPE' in pe_types:
+        max_freqs = cfg.posenc_EquivStableLapPE.eigen.max_freqs
+        eigvec_norm = cfg.posenc_EquivStableLapPE.eigen.eigvec_norm
 
-        # Compute only the smallest max_freqs eigenvalues and eigenvectors
-        evals, evects = eigvalsh(L)
-        evals, evects = evals[:max_freqs], evects[:, :max_freqs]
+    # Convert PyTorch tensor to CuPy array
+    L_cupy = cp.asarray(L.cpu().numpy())
 
-        data.EigVals, data.EigVecs = get_lap_decomp_stats(
-            evals=evals, evects=evects,
-            max_freqs=max_freqs,
-            eigvec_norm=eigvec_norm)
+    # Compute only the smallest max_freqs eigenvalues and eigenvectors
+    evals_cupy, evects_cupy = cp.linalg.eigh(L_cupy, UPLO='L')
+    evals_cupy, evects_cupy = evals_cupy[:max_freqs], evects_cupy[:, :max_freqs]
+
+    # Convert the results back to PyTorch tensors
+    evals = torch.from_numpy(cp.asnumpy(evals_cupy)).to(device='cuda')
+    evects = torch.from_numpy(cp.asnumpy(evects_cupy)).to(device='cuda')
+
+    data.EigVals, data.EigVecs = get_lap_decomp_stats(
+        evals=evals, evects=evects,
+        max_freqs=max_freqs,
+        eigvec_norm=eigvec_norm)
 
     if 'SignNet' in pe_types:
         # Eigen-decomposition with numpy for SignNet.
