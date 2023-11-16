@@ -170,8 +170,9 @@ def get_lap_decomp_stats(evals, evects, max_freqs, eigvec_norm='L2'):
 
     # Keep up to the maximum desired number of frequencies.
     idx = evals.argsort()[:max_freqs]
-    evals, evects = evals[idx], np.real(evects[:, idx])
-    evals = torch.from_numpy(np.real(evals)).clamp_min(0)
+    evals, evects = evals[idx], evects[:, idx]
+    evals = evals.clamp_min(0)
+    evects = torch.view_as_real(evects).real
 
     # Normalize and pad eigen vectors.
     evects = eigvec_normalizer(evects, evals, normalization=eigvec_norm)
