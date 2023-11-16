@@ -82,7 +82,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
             eigvec_norm = cfg.posenc_EquivStableLapPE.eigen.eigvec_norm
     
         # Compute only the smallest max_freqs eigenvalues and eigenvectors
-        evals_cupy, evects_cupy = eigsh(L, k=max_freqs, which='SM')
+        evals_cupy, evects_cupy = eigsh(L, k=max_freqs, which='SA')
     
         # Convert the results back to PyTorch tensors
         evals = torch.from_numpy(evals_cupy)
