@@ -2,6 +2,7 @@ import logging
 import os.path as osp
 import time
 from functools import partial
+from tqdm import tqdm
 
 import numpy as np
 import torch
@@ -235,17 +236,14 @@ def load_dataset_master(format, name, dataset_dir):
         # Estimate directedness based on 10 graphs to save time.
         is_undirected = all(d.is_undirected() for d in dataset[:10])
         logging.info(f"  ...estimated to be undirected: {is_undirected}")
-        pre_transform_in_memory(dataset,
-                                partial(compute_posenc_stats,
-                                        pe_types=pe_enabled_list,
-                                        is_undirected=is_undirected,
-                                        cfg=cfg),
-                                show_progress=True
-                                )
-        elapsed = time.perf_counter() - start
-        timestr = time.strftime('%H:%M:%S', time.gmtime(elapsed)) \
-                  + f'{elapsed:.2f}'[-3:]
-        logging.info(f"Done! Took {timestr}")
+
+        # Apply compute_posenc_stats to each graph in the dataset: Circumvents use of pre_transform_in_memory
+        for data in tqdm(dataset):
+            compute_posenc_stats(data, pe_types=pe_enabled_list, is_undirected=is_undirected, cfg=cfg)
+            elapsed = time.perf_counter() - start
+            timestr = time.strftime('%H:%M:%S', time.gmtime(elapsed)) \
+                      + f'{elapsed:.2f}'[-3:]
+            logging.info(f"Done! Took {timestr}")
 
     # Set standard dataset train/val/test splits
     if hasattr(dataset, 'split_idxs'):
