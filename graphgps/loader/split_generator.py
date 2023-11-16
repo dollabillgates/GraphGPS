@@ -159,7 +159,7 @@ def setup_sliced_split(dataset):
 
     set_dataset_splits(dataset, [train_index, val_index, test_index])
 
-
+# Modified for pyg Dataset classes, instead of InMemoryDataset
 def set_dataset_splits(dataset, splits):
     """Set given splits to the dataset object.
 
@@ -170,7 +170,7 @@ def set_dataset_splits(dataset, splits):
     Raises:
         ValueError: If any pair of splits has intersecting indices
     """
-    # First check whether splits intersect and raise error if so.
+    # Check whether splits intersect and raise error if so
     for i in range(len(splits) - 1):
         for j in range(i + 1, len(splits)):
             n_intersect = len(set(splits[i]) & set(splits[j]))
@@ -184,17 +184,23 @@ def set_dataset_splits(dataset, splits):
 
     task_level = cfg.dataset.task
     if task_level == 'node':
-        split_names = ['train_mask', 'val_mask', 'test_mask']
-        for split_name, split_index in zip(split_names, splits):
-            mask = index2mask(split_index, size=dataset.data.y.shape[0])
-            set_dataset_attr(dataset, split_name, mask, len(mask))
+        # Assuming dataset is a list of data objects
+        for data_index, data in enumerate(dataset):
+            split_names = ['train_mask', 'val_mask', 'test_mask']
+            for split_name, split_index in zip(split_names, splits):
+                if data_index in split_index:
+                    mask = True
+                else:
+                    mask = False
+                setattr(data, split_name, mask)
 
     elif task_level == 'graph':
         split_names = [
             'train_graph_index', 'val_graph_index', 'test_graph_index'
         ]
         for split_name, split_index in zip(split_names, splits):
-            set_dataset_attr(dataset, split_name, split_index, len(split_index))
+            for data_index, data in enumerate(dataset):
+                setattr(data, split_name, data_index in split_index)
 
     else:
         raise ValueError(f"Unsupported dataset task level: {task_level}")
