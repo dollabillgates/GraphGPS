@@ -60,7 +60,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
     if 'LapPE' in pe_types or 'EquivStableLapPE' in pe_types:
         # Get Laplacian in dense format
         edge_index, edge_weight = get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)
-        edge_index = edge_index.to(device='cuda')  # Move to GPU
+        edge_index = edge_index.to(device='cuda')
         edge_weight = edge_weight.to(device='cuda')
 
         # Create dense Laplacian matrix
