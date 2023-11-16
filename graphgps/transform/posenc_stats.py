@@ -4,9 +4,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from numpy.linalg import eigvals
-import cupyx
-from cupyx.scipy.sparse.linalg import eigsh
-import cupy as cp
+from scipy.sparse.linalg import eigsh
 from torch_geometric.utils import (get_laplacian, to_scipy_sparse_matrix,
                                    to_undirected, to_dense_adj, scatter)
 from torch_geometric.utils.num_nodes import maybe_num_nodes
@@ -61,17 +59,11 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
     # Eigen values and vectors.
     evals, evects = None, None
     if 'LapPE' in pe_types or 'EquivStableLapPE' in pe_types:
-        # Get Laplacian in sparse format
-        edge_index, edge_weight = get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)
-        edge_index_cuda = edge_index.cuda() if not edge_index.is_cuda else edge_index
-        edge_weight_cuda = edge_weight.cuda() if not edge_weight.is_cuda else edge_weight
-      
-        # Convert the PyTorch tensors to CuPy arrays
-        edge_index_cupy = cp.asarray(edge_index_cuda)
-        edge_weight_cupy = cp.asarray(edge_weight_cuda)
-        
-        # Create the COO matrix directly using CuPy arrays
-        L = cupyx.scipy.sparse.coo_matrix((edge_weight_cupy, (edge_index_cupy[0], edge_index_cupy[1])), shape=(N, N)).tocsr()
+        # Convert to scipy sparse matrix
+        L = to_scipy_sparse_matrix(
+            *get_laplacian(undir_edge_index, normalization=laplacian_norm_type,
+                           num_nodes=N)
+        )
     
         # Determine max_freqs and eigvec_norm based on PE type
         if 'LapPE' in pe_types:
@@ -80,13 +72,12 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
         elif 'EquivStableLapPE' in pe_types:
             max_freqs = cfg.posenc_EquivStableLapPE.eigen.max_freqs
             eigvec_norm = cfg.posenc_EquivStableLapPE.eigen.eigvec_norm
-    
+        
         # Compute only the smallest max_freqs eigenvalues and eigenvectors
-        evals_cupy, evects_cupy = eigsh(L, k=max_freqs, which='SA')
+        evals, evects = eigsh(L, k=max_freqs, which='SA')
     
-        # Convert the results back to PyTorch tensors
-        evals = torch.from_numpy(evals_cupy)
-        evects = torch.from_numpy(evects_cupy)
+        # Ensure real values for eigenvalues and eigenvectors
+        evals, evects = np.real(evals), np.real(evects)
     
         data.EigVals, data.EigVecs = get_lap_decomp_stats(
             evals=evals, evects=evects,
@@ -165,20 +156,27 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
 
     return data
 
+
 def get_lap_decomp_stats(evals, evects, max_freqs, eigvec_norm='L2'):
     """Compute Laplacian eigen-decomposition-based PE stats of the given graph.
 
     Args:
         evals, evects: Precomputed eigen-decomposition
-        max_freqs: Maximum number of top smallest frequencies / eigenvecs for padding
+        max_freqs: Maximum number of top smallest frequencies / eigenvecs to use
         eigvec_norm: Normalization for the eigen vectors of the Laplacian
     Returns:
         Tensor (num_nodes, max_freqs, 1) eigenvalues repeated for each node
         Tensor (num_nodes, max_freqs) of eigenvector values per node
     """
-    N = evals.size(0)  # Number of nodes, including disconnected nodes.
+    N = len(evals)  # Number of nodes, including disconnected nodes.
+
+    # Keep up to the maximum desired number of frequencies.
+    idx = evals.argsort()[:max_freqs]
+    evals, evects = evals[idx], np.real(evects[:, idx])
+    evals = torch.from_numpy(np.real(evals)).clamp_min(0)
 
     # Normalize and pad eigen vectors.
+    evects = torch.from_numpy(evects).float()
     evects = eigvec_normalizer(evects, evals, normalization=eigvec_norm)
     if N < max_freqs:
         EigVecs = F.pad(evects, (0, max_freqs - N), value=float('nan'))
@@ -193,6 +191,7 @@ def get_lap_decomp_stats(evals, evects, max_freqs, eigvec_norm='L2'):
     EigVals = EigVals.repeat(N, 1).unsqueeze(2)
 
     return EigVals, EigVecs
+
 
 def get_rw_landing_probs(ksteps, edge_index, edge_weight=None,
                          num_nodes=None, space_dim=0):
