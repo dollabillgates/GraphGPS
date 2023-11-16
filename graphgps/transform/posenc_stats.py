@@ -5,6 +5,7 @@ import torch
 import torch.nn.functional as F
 from numpy.linalg import eigvals
 import cupyx
+from cupyx.scipy.sparse.linalg import eigsh
 import cupy as cp
 from torch_geometric.utils import (get_laplacian, to_scipy_sparse_matrix,
                                    to_undirected, to_dense_adj, scatter)
@@ -81,7 +82,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
             eigvec_norm = cfg.posenc_EquivStableLapPE.eigen.eigvec_norm
     
         # Compute only the smallest max_freqs eigenvalues and eigenvectors
-        evals_cupy, evects_cupy = cupyx.scipy.sparse.linalg.eigsh(L, k=max_freqs, which='SM')
+        evals_cupy, evects_cupy = eigsh(L, k=max_freqs, which='SM')
     
         # Convert the results back to PyTorch tensors
         evals = torch.from_numpy(evals_cupy)
