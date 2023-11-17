@@ -10,8 +10,8 @@ from torch_geometric.utils.num_nodes import maybe_num_nodes
 from graphgps.encoder.graphormer_encoder import graphormer_pre_processing
 
 
-def compute_posenc_stats(data, pe_types, is_undirected, cfg):
-    """Precompute positional encodings for the given graph.
+def compute_posenc_stats(data, pe_types, is_undirected, cfg, eigen_path):
+    """Precompute positional encodings for the given graph. Modified to load from eigen_path if it exists.
 
     Supported PE statistics to precompute, selected by `pe_types`:
     'LapPE': Laplacian eigen-decomposition.
@@ -36,7 +36,19 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
         if t not in ['LapPE', 'EquivStableLapPE', 'SignNet', 'RWSE', 'HKdiagSE',
                      'HKfullPE', 'ElstaticSE', 'GraphormerBias']:
             raise ValueError(f"Unexpected PE stats selection {t} in {pe_types}")
+                       
+    
+    # Paths for saved eigenvalues and eigenvectors.
+    graph_id = data.filename 
+    evals_path = os.path.join(save_path, f"{graph_id}_evals.pt")
+    evects_path = os.path.join(save_path, f"{graph_id}_evects.pt")
 
+    # Check if the eigenvalues and eigenvectors are already computed.
+    if os.path.exists(evals_path) and os.path.exists(evects_path):
+        data.EigVals = torch.load(evals_path)
+        data.EigVecs = torch.load(evects_path)
+        return data
+  
     # Basic preprocessing of the input graph.
     if hasattr(data, 'num_nodes'):
         N = data.num_nodes  # Explicitly given number of nodes, e.g. ogbg-ppa
@@ -82,6 +94,10 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg):
             evals=evals, evects=evects,
             max_freqs=max_freqs,
             eigvec_norm=eigvec_norm)
+
+        # Save the computed eigenvalues and eigenvectors.
+        torch.save(data.EigVals, evals_path)
+        torch.save(data.EigVecs, evects_path)
 
     if 'SignNet' in pe_types:
         # Eigen-decomposition with numpy for SignNet.
