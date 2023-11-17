@@ -251,7 +251,7 @@ def load_dataset_master(format, name, dataset_dir):
         delattr(dataset, 'split_idxs')
 
     # Verify or generate dataset train/val/test splits
-    prepare_splits(dataset)
+    # prepare_splits(dataset)
 
     # Precompute in-degree histogram if needed for PNAConv.
     if cfg.gt.layer_type.startswith('PNA') and len(cfg.gt.pna_degrees) == 0:
