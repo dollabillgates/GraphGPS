@@ -254,8 +254,8 @@ def load_dataset_master(format, name, dataset_dir):
         # Save all at once after processing the entire dataset
         for data in graphs_to_save:
             graph_id = data.filename
-            evals_path = os.path.join(eigen_path, f"{graph_id}_evals.pt")
-            evects_path = os.path.join(eigen_path, f"{graph_id}_evects.pt")
+            evals_path = osp.join(eigen_path, f"{graph_id}_evals.pt")
+            evects_path = osp.join(eigen_path, f"{graph_id}_evects.pt")
             torch.save(data.EigVals, evals_path)
             torch.save(data.EigVecs, evects_path)
 
