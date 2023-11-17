@@ -47,7 +47,8 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg, eigen_path):
     if os.path.exists(evals_path) and os.path.exists(evects_path):
         data.EigVals = torch.load(evals_path)
         data.EigVecs = torch.load(evects_path)
-        return None
+      
+        return False
   
     # Basic preprocessing of the input graph.
     if hasattr(data, 'num_nodes'):
