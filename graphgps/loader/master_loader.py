@@ -29,6 +29,7 @@ from graphgps.transform.transforms import (pre_transform_in_memory,
                                            clip_graphs_to_size)
 
 # Adjust logging
+'''
 def log_loaded_dataset(dataset, format, name):
     logging.info(f"[*] Loaded dataset '{name}' from '{format}':")
     logging.info(f"  num graphs: {len(dataset)}")
@@ -56,7 +57,7 @@ def log_loaded_dataset(dataset, format, name):
         logging.info(f"  num classes: {num_classes}")
     else:
         logging.info("  y attribute not found or empty in the dataset")
-    
+'''    
 # def log_loaded_dataset(dataset, format, name):
 #     logging.info(f"[*] Loaded dataset '{name}' from '{format}':")
 #     logging.info(f"  {dataset.data}")
