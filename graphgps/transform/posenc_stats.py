@@ -47,7 +47,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg, eigen_path):
     if os.path.exists(evals_path) and os.path.exists(evects_path):
         data.EigVals = torch.load(evals_path)
         data.EigVecs = torch.load(evects_path)
-        return data
+        return False 
   
     # Basic preprocessing of the input graph.
     if hasattr(data, 'num_nodes'):
@@ -95,9 +95,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg, eigen_path):
             max_freqs=max_freqs,
             eigvec_norm=eigvec_norm)
 
-        # Save the computed eigenvalues and eigenvectors.
-        torch.save(data.EigVals, evals_path)
-        torch.save(data.EigVecs, evects_path)
+        return True 
 
     if 'SignNet' in pe_types:
         # Eigen-decomposition with numpy for SignNet.
