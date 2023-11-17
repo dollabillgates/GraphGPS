@@ -237,17 +237,16 @@ def load_dataset_master(format, name, dataset_dir):
         # Estimate directedness based on 10 graphs to save time.
         is_undirected = all(d.is_undirected() for d in dataset[:10])
         logging.info(f"  ...estimated to be undirected: {is_undirected}")
-    
+      
+        # Apply compute_posenc_stats to each graph in the dataset. Circumvents use of pre_transform_in_memory
         eigen_path = "/content/drive/MyDrive/protein-DATA/eigens_precomputed"
-        graphs_to_save = []  # List to store graphs that need saving after processing
-    
+        graphs_to_save = []
+      
         for data in tqdm(dataset):
             was_computed = compute_posenc_stats(data, pe_types=pe_enabled_list, is_undirected=is_undirected, cfg=cfg, eigen_path=eigen_path)
-    
             # Add graph to save list if new EigVecs and EigVals were computed
             if was_computed:
                 graphs_to_save.append(data)
-    
             elapsed = time.perf_counter() - start
             timestr = time.strftime('%H:%M:%S', time.gmtime(elapsed)) + f'{elapsed:.2f}'[-3:]
             logging.info(f"Done! Took {timestr}")
