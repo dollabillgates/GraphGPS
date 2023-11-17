@@ -47,9 +47,11 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg, eigen_path):
     if os.path.exists(evals_path) and os.path.exists(evects_path):
         data.EigVals = torch.load(evals_path)
         data.EigVecs = torch.load(evects_path)
+        print("loading")
       
         return False
-  
+
+    print("computing")
     # Basic preprocessing of the input graph.
     if hasattr(data, 'num_nodes'):
         N = data.num_nodes  # Explicitly given number of nodes, e.g. ogbg-ppa
