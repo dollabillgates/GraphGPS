@@ -40,8 +40,8 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg, eigen_path):
     
     # Paths for saved eigenvalues and eigenvectors.
     graph_id = data.filename 
-    evals_path = os.path.join(save_path, f"{graph_id}_evals.pt")
-    evects_path = os.path.join(save_path, f"{graph_id}_evects.pt")
+    evals_path = os.path.join(eigen_path, f"{graph_id}_evals.pt")
+    evects_path = os.path.join(eigen_path, f"{graph_id}_evects.pt")
 
     # Check if the eigenvalues and eigenvectors are already computed.
     if os.path.exists(evals_path) and os.path.exists(evects_path):
