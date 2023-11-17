@@ -216,7 +216,7 @@ def load_dataset_master(format, name, dataset_dir):
 
     # pre_transform_in_memory(dataset, partial(task_specific_preprocessing, cfg=cfg))
 
-    log_loaded_dataset(dataset, format, name)
+    # log_loaded_dataset(dataset, format, name)
 
     # Precompute necessary statistics for positional encodings.
     pe_enabled_list = []
