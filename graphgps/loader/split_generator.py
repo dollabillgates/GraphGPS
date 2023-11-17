@@ -65,13 +65,14 @@ def setup_standard_split(dataset):
                     mask[:] = True
 
     elif task_level == 'graph':
-        for split_name in ['train_graph_index', 'val_graph_index', 'test_graph_index']:
-            split_indices = getattr(dataset, split_name, None)
-            if split_indices is None:
-                raise ValueError(f"Missing '{split_name}' for standard split")
-            # Set attribute for each Data object in the dataset
+        split_names = ['train_graph_index', 'val_graph_index', 'test_graph_index']
+        split_idxs = getattr(dataset, 'split_idxs', None)
+        if split_idxs is None:
+            raise ValueError("Dataset does not have 'split_idxs' attribute.")
+
+        for split_name, split_idx in zip(split_names, split_idxs):
             for data_index, data in enumerate(dataset):
-                setattr(data, split_name, data_index in split_indices)
+                setattr(data, split_name, data_index in split_idx)
 
     elif task_level == 'link_pred':
         for split_name in ['train_edge_index', 'val_edge_index', 'test_edge_index']:
@@ -146,7 +147,9 @@ def setup_sliced_split(dataset):
 # Modified for pyg Dataset classes, instead of InMemoryDataset
 def set_dataset_splits(dataset, splits):
     """Set given splits to the dataset object.
-	@@ -170,7 +170,7 @@ def set_dataset_splits(dataset, splits):
+    Args:
+        dataset: PyG dataset object
+        splits: List of train/val/test split indices
     Raises:
         ValueError: If any pair of splits has intersecting indices
     """
