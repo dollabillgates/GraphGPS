@@ -25,9 +25,10 @@ def prepare_splits(dataset):
         setup_sliced_split(dataset)
     else:
         raise ValueError(f"Unknown split mode: {split_mode}")
-        
+
 def setup_standard_split(dataset):
-    """Select a standard split.
+    """
+    Select a standard split.
     Use standard splits that come with the dataset. Pick one split based on the
     ``split_index`` from the config file if multiple splits are available.
     GNNBenchmarkDatasets have splits that are not prespecified as masks. Therefore,
@@ -36,44 +37,53 @@ def setup_standard_split(dataset):
         ValueError: If any one of train/val/test mask is missing.
         IndexError: If the ``split_index`` is greater or equal to the total
             number of splits available.
+	    
+    This function is modified to work with PyG Datasets where each item in the
+    dataset is a Data object, as opposed to a single data attribute in an
+    InMemoryDataset.
     """
     split_index = cfg.dataset.split_index
     task_level = cfg.dataset.task
+
     if task_level == 'node':
-        for split_name in 'train_mask', 'val_mask', 'test_mask':
-            mask = getattr(dataset.data, split_name, None)
-            # Check if the train/val/test split mask is available
-            if mask is None:
-                raise ValueError(f"Missing '{split_name}' for standard split")
-            # Pick a specific split if multiple splits are available
-            if mask.dim() == 2:
-                if split_index >= mask.shape[1]:
-                    raise IndexError(f"Specified split index ({split_index}) is "
-                                     f"out of range of the number of available "
-                                     f"splits ({mask.shape[1]}) for {split_name}")
-                set_dataset_attr(dataset, split_name, mask[:, split_index],
-                                 len(mask[:, split_index]))
-            else:
-                if split_index != 0:
-                    raise IndexError(f"This dataset has single standard split")
+        for split_name in ['train_mask', 'val_mask', 'test_mask']:
+            # Initialize masks for each Data object in the dataset
+            for data in dataset:
+                setattr(data, split_name, torch.zeros(data.num_nodes, dtype=torch.bool))
+
+            # Set masks based on the split configuration
+            for data_index, data in enumerate(dataset):
+                mask = getattr(data, split_name)
+                if mask.dim() == 2:
+                    if split_index >= mask.shape[1]:
+                        raise IndexError(f"Specified split index ({split_index}) is "
+                                         f"out of range for {split_name}")
+                    mask[:, split_index] = True
+                else:
+                    if split_index != 0:
+                        raise IndexError(f"This dataset has single standard split")
+                    mask[:] = True
+
     elif task_level == 'graph':
-        for split_name in 'train_graph_index', 'val_graph_index', 'test_graph_index':
-            if not hasattr(dataset.data, split_name):
+        for split_name in ['train_graph_index', 'val_graph_index', 'test_graph_index']:
+            split_indices = getattr(dataset, split_name, None)
+            if split_indices is None:
                 raise ValueError(f"Missing '{split_name}' for standard split")
-        if split_index != 0:
-            raise NotImplementedError(f"Multiple standard splits not supported "
-                                      f"for dataset task level: {task_level}")
+            # Set attribute for each Data object in the dataset
+            for data_index, data in enumerate(dataset):
+                setattr(data, split_name, data_index in split_indices)
+
     elif task_level == 'link_pred':
-        for split_name in 'train_edge_index', 'val_edge_index', 'test_edge_index':
-            if not hasattr(dataset.data, split_name):
+        for split_name in ['train_edge_index', 'val_edge_index', 'test_edge_index']:
+            edge_indices = getattr(dataset, split_name, None)
+            if edge_indices is None:
                 raise ValueError(f"Missing '{split_name}' for standard split")
-        if split_index != 0:
-            raise NotImplementedError(f"Multiple standard splits not supported "
-                                      f"for dataset task level: {task_level}")
+            # Set edge indices for each Data object
+            for data in dataset:
+                setattr(data, split_name, edge_indices)
+
     else:
-        if split_index != 0:
-            raise NotImplementedError(f"Multiple standard splits not supported "
-                                      f"for dataset task level: {task_level}")
+        raise ValueError(f"Unsupported dataset task level: {task_level}")
             
 def setup_random_split(dataset):
     """Generate random splits.
