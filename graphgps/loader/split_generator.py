@@ -35,14 +35,14 @@ def setup_standard_split(dataset):
     """Select a standard split for a PyG Dataset.
 
     This function has been adapted to work with PyG Dataset class. It assumes that
-    each graph in the dataset has its own split attributes.
+    each graph in the dataset may have its own split attributes.
 
     Args:
         dataset (torch_geometric.data.Dataset): The dataset to set up splits for.
 
     Raises:
-        ValueError: If any one of train/val/test mask is missing.
-        IndexError: If the `split_index` is greater or equal to the total number of splits available.
+        ValueError: If any one of train/val/test mask is missing for node-level tasks, or if necessary attributes are missing for graph/link prediction tasks.
+        IndexError: If the `split_index` is greater or equal to the total number of splits available for node-level tasks.
     """
     split_index = cfg.dataset.split_index
     task_level = cfg.dataset.task
@@ -51,18 +51,15 @@ def setup_standard_split(dataset):
         for data in dataset:
             for split_name in ['train_mask', 'val_mask', 'test_mask']:
                 mask = getattr(data, split_name, None)
-                # Check if the train/val/test split mask is available
                 if mask is None:
                     raise ValueError(f"Missing '{split_name}' for standard split in graph {data}")
 
-                # Pick a specific split if multiple splits are available
                 if mask.dim() == 2:
                     if split_index >= mask.shape[1]:
                         raise IndexError(f"Specified split index ({split_index}) is out of range for {split_name} in graph {data}")
                     setattr(data, split_name, mask[:, split_index])
 
     elif task_level in ['graph', 'link_pred']:
-        # For graph-level and link prediction tasks, you need to ensure that each graph in the dataset has the required attributes
         split_names = {
             'graph': ['train_graph_index', 'val_graph_index', 'test_graph_index'],
             'link_pred': ['train_edge_index', 'val_edge_index', 'test_edge_index']
