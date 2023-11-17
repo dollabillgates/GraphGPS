@@ -7,11 +7,12 @@ import graphgps  # noqa, register custom modules
 from graphgps.agg_runs import agg_runs
 from graphgps.optimizer.extra_optimizers import ExtendedSchedulerConfig
 
+from torch_geometric.data import DataLoader
+
 from torch_geometric.graphgym.cmd_args import parse_args
 from torch_geometric.graphgym.config import (cfg, dump_cfg,
                                              set_cfg, load_cfg,
                                              makedirs_rm_exist)
-from torch_geometric.graphgym.loader import create_loader
 from torch_geometric.graphgym.logger import set_printing
 from torch_geometric.graphgym.optim import create_optimizer, \
     create_scheduler, OptimizerConfig
@@ -29,6 +30,27 @@ from graphgps.logger import create_logger
 
 torch.backends.cuda.matmul.allow_tf32 = True  # Default False in PyTorch 1.12+
 torch.backends.cudnn.allow_tf32 = True  # Default True
+
+def create_loader():
+    """Create data loaders for a PyG Dataset object with specific split attributes.
+
+    Returns: 
+        List of PyTorch data loaders
+    """
+    dataset = create_dataset()
+
+    # Filter datasets based on split attributes
+    train_dataset = [data for data in dataset if hasattr(data, 'train_graph_index') and data.train_graph_index]
+    val_dataset = [data for data in dataset if hasattr(data, 'val_graph_index') and data.val_graph_index]
+    test_dataset = [data for data in dataset if hasattr(data, 'test_graph_index') and data.test_graph_index]
+
+    train_loader = DataLoader(train_dataset, batch_size=cfg.train.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=cfg.train.batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=cfg.train.batch_size, shuffle=False)
+
+    loaders = [train_loader, val_loader, test_loader]
+
+    return loaders
 
 
 def new_optimizer_config(cfg):
