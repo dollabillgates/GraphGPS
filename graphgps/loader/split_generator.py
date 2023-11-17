@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, ShuffleSplit
 from torch_geometric.graphgym.config import cfg
 from torch_geometric.graphgym.loader import index2mask, set_dataset_attr
+
 def prepare_splits(dataset):
     """Ready train/val/test splits.
     Determine the type of split from the config and call the corresponding
@@ -24,45 +25,56 @@ def prepare_splits(dataset):
         setup_sliced_split(dataset)
     else:
         raise ValueError(f"Unknown split mode: {split_mode}")
+        
 def setup_standard_split(dataset):
-    """Select a standard split for a PyG Dataset.
-    This function has been adapted to work with PyG Dataset class. It assumes that
-    each graph in the dataset has its own split attributes.
-    Args:
-        dataset (torch_geometric.data.Dataset): The dataset to set up splits for.
+    """Select a standard split.
+    Use standard splits that come with the dataset. Pick one split based on the
+    ``split_index`` from the config file if multiple splits are available.
+    GNNBenchmarkDatasets have splits that are not prespecified as masks. Therefore,
+    they are handled differently and are first processed to generate the masks.
     Raises:
         ValueError: If any one of train/val/test mask is missing.
-        IndexError: If the `split_index` is greater or equal to the total number of splits available.
+        IndexError: If the ``split_index`` is greater or equal to the total
+            number of splits available.
     """
     split_index = cfg.dataset.split_index
     task_level = cfg.dataset.task
     if task_level == 'node':
-        for data in dataset:
-            for split_name in ['train_mask', 'val_mask', 'test_mask']:
-                mask = getattr(data, split_name, None)
-                # Check if the train/val/test split mask is available
-                if mask is None:
-                    raise ValueError(f"Missing '{split_name}' for standard split in graph {data}")
-
-                # Pick a specific split if multiple splits are available
-                if mask.dim() == 2:
-                    if split_index >= mask.shape[1]:
-                        raise IndexError(f"Specified split index ({split_index}) is out of range for {split_name} in graph {data}")
-                    setattr(data, split_name, mask[:, split_index])
-
-    elif task_level in ['graph', 'link_pred']:
-        # For graph-level and link prediction tasks, you need to ensure that each graph in the dataset has the required attributes
-        split_names = {
-            'graph': ['train_graph_index', 'val_graph_index', 'test_graph_index'],
-            'link_pred': ['train_edge_index', 'val_edge_index', 'test_edge_index']
-        }[task_level]
-        for data in dataset:
-            for split_name in split_names:
-                if not hasattr(data, split_name):
-                    raise ValueError(f"Missing '{split_name}' for standard split in graph {data}")
+        for split_name in 'train_mask', 'val_mask', 'test_mask':
+            mask = getattr(dataset.data, split_name, None)
+            # Check if the train/val/test split mask is available
+            if mask is None:
+                raise ValueError(f"Missing '{split_name}' for standard split")
+            # Pick a specific split if multiple splits are available
+            if mask.dim() == 2:
+                if split_index >= mask.shape[1]:
+                    raise IndexError(f"Specified split index ({split_index}) is "
+                                     f"out of range of the number of available "
+                                     f"splits ({mask.shape[1]}) for {split_name}")
+                set_dataset_attr(dataset, split_name, mask[:, split_index],
+                                 len(mask[:, split_index]))
+            else:
+                if split_index != 0:
+                    raise IndexError(f"This dataset has single standard split")
+    elif task_level == 'graph':
+        for split_name in 'train_graph_index', 'val_graph_index', 'test_graph_index':
+            if not hasattr(dataset.data, split_name):
+                raise ValueError(f"Missing '{split_name}' for standard split")
+        if split_index != 0:
+            raise NotImplementedError(f"Multiple standard splits not supported "
+                                      f"for dataset task level: {task_level}")
+    elif task_level == 'link_pred':
+        for split_name in 'train_edge_index', 'val_edge_index', 'test_edge_index':
+            if not hasattr(dataset.data, split_name):
+                raise ValueError(f"Missing '{split_name}' for standard split")
+        if split_index != 0:
+            raise NotImplementedError(f"Multiple standard splits not supported "
+                                      f"for dataset task level: {task_level}")
     else:
         if split_index != 0:
-            raise NotImplementedError(f"Multiple standard splits not supported for dataset task level: {task_level}")
+            raise NotImplementedError(f"Multiple standard splits not supported "
+                                      f"for dataset task level: {task_level}")
+            
 def setup_random_split(dataset):
     """Generate random splits.
     Generate random train/val/test based on the ratios defined in the config
@@ -99,6 +111,7 @@ def setup_random_split(dataset):
     val_index = val_test_index[val_index]
     test_index = val_test_index[test_index]
     set_dataset_splits(dataset, [train_index, val_index, test_index])
+    
 def setup_fixed_split(dataset):
     """Generate fixed splits.
     Generate fixed train/val/test based on the ratios defined in the config
@@ -108,6 +121,7 @@ def setup_fixed_split(dataset):
     val_index = list(range(cfg.dataset.split[0], sum(cfg.dataset.split[:2])))
     test_index = list(range(sum(cfg.dataset.split[:2]), sum(cfg.dataset.split)))
     set_dataset_splits(dataset, [train_index, val_index, test_index])
+    
 def setup_sliced_split(dataset):
     """Generate sliced splits.
     Generate sliced train/val/test based on the ratios defined in the config
@@ -116,13 +130,13 @@ def setup_sliced_split(dataset):
     train_index = list(range(*cfg.dataset.split[0]))
     val_index = list(range(*cfg.dataset.split[1]))
     test_index = list(range(*cfg.dataset.split[2]))
+
     set_dataset_splits(dataset, [train_index, val_index, test_index])
+
 # Modified for pyg Dataset classes, instead of InMemoryDataset
 def set_dataset_splits(dataset, splits):
     """Set given splits to the dataset object.
-    Args:
-        dataset: PyG dataset object
-        splits: List of train/val/test split indices
+	@@ -170,7 +170,7 @@ def set_dataset_splits(dataset, splits):
     Raises:
         ValueError: If any pair of splits has intersecting indices
     """
@@ -137,6 +151,7 @@ def set_dataset_splits(dataset, splits):
                     f"split #{j} (n = {len(splits[j])}) have "
                     f"{n_intersect} intersecting indices"
                 )
+
     task_level = cfg.dataset.task
     if task_level == 'node':
         # Assuming dataset is a list of data objects
@@ -148,6 +163,7 @@ def set_dataset_splits(dataset, splits):
                 else:
                     mask = False
                 setattr(data, split_name, mask)
+
     elif task_level == 'graph':
         split_names = [
             'train_graph_index', 'val_graph_index', 'test_graph_index'
@@ -155,8 +171,10 @@ def set_dataset_splits(dataset, splits):
         for split_name, split_index in zip(split_names, splits):
             for data_index, data in enumerate(dataset):
                 setattr(data, split_name, data_index in split_index)
+
     else:
         raise ValueError(f"Unsupported dataset task level: {task_level}")
+        
 def setup_cv_split(dataset, cv_type, k):
     """Generate cross-validation splits.
     Generate `k` folds for cross-validation based on `cv_type` procedure. Save
@@ -194,6 +212,7 @@ def setup_cv_split(dataset, cv_type, k):
         if i != split_index and i != (split_index + 1) % k:
             train_ids.extend(cv[str(i)])
     set_dataset_splits(dataset, [train_ids, val_ids, test_ids])
+    
 def create_cv_splits(dataset, cv_type, k, file_name):
     """Create cross-validation splits and save them to file.
     """
