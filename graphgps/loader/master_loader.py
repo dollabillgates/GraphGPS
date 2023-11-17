@@ -245,7 +245,7 @@ def load_dataset_master(format, name, dataset_dir):
         for data in tqdm(dataset):
             result = compute_posenc_stats(data, pe_types=pe_enabled_list, is_undirected=is_undirected, cfg=cfg, eigen_path=eigen_path)
             # Add graph to save list if new EigVecs and EigVals were computed
-            if result:
+            if result is True:
                 graphs_to_save.append(data)
             elapsed = time.perf_counter() - start
             timestr = time.strftime('%H:%M:%S', time.gmtime(elapsed)) + f'{elapsed:.2f}'[-3:]
