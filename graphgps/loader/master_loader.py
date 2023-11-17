@@ -231,15 +231,16 @@ def load_dataset_master(format, name, dataset_dir):
                              f"{pecfg.kernel.times}")
     if pe_enabled_list:
         start = time.perf_counter()
-        logging.info(f"Precomputing Positional Encoding statistics: "
+        logging.info(f"Precomputing/ Checking for Positional Encoding statistics: "
                      f"{pe_enabled_list} for all graphs...")
         # Estimate directedness based on 10 graphs to save time.
         is_undirected = all(d.is_undirected() for d in dataset[:10])
         logging.info(f"  ...estimated to be undirected: {is_undirected}")
 
         # Apply compute_posenc_stats to each graph in the dataset: Circumvents use of pre_transform_in_memory
+        eigen_path = "/content/drive/MyDrive/protein-DATA/eigens_precomputed"
         for data in tqdm(dataset):
-            compute_posenc_stats(data, pe_types=pe_enabled_list, is_undirected=is_undirected, cfg=cfg)
+            compute_posenc_stats(data, pe_types=pe_enabled_list, is_undirected=is_undirected, cfg=cfg, eigen_path=eigen_path)
             elapsed = time.perf_counter() - start
             timestr = time.strftime('%H:%M:%S', time.gmtime(elapsed)) \
                       + f'{elapsed:.2f}'[-3:]
