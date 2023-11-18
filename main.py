@@ -113,7 +113,7 @@ def create_loader():
     val_loader = DataLoader(val_dataset, batch_size=cfg.train.batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=cfg.train.batch_size, shuffle=False)
 
-    loaders = train_loader, val_loader, test_loader
+    loaders = [train_loader, val_loader, test_loader]
 
     return loaders
 
