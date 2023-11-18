@@ -181,9 +181,18 @@ def set_dataset_splits(dataset, splits):
         split_names = [
             'train_graph_index', 'val_graph_index', 'test_graph_index'
         ]
+        split_counts = {name: 0 for name in split_names}
         for split_name, split_index in zip(split_names, splits):
             for data_index, data in enumerate(dataset):
-                setattr(data, split_name, data_index in split_index)
+                if data_index in split_index:
+                    setattr(data, split_name, True)
+                    split_counts[split_name] += 1
+                else:
+                    setattr(data, split_name, False)
+
+        # Print the count of each split
+        for split_name, count in split_counts.items():
+            print(f"{split_name} count: {count}")
 
     else:
         raise ValueError(f"Unsupported dataset task level: {task_level}")
