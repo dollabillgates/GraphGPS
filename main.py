@@ -105,6 +105,10 @@ def create_loader():
     val_dataset = [data for data in dataset if hasattr(data, 'val_graph_index') and data.val_graph_index]
     test_dataset = [data for data in dataset if hasattr(data, 'test_graph_index') and data.test_graph_index]
 
+    print("Train dataset length:", len(train_dataset))
+    print("Validation dataset length:", len(val_dataset))
+    print("Test dataset length:", len(test_dataset))
+
     train_loader = DataLoader(train_dataset, batch_size=cfg.train.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=cfg.train.batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=cfg.train.batch_size, shuffle=False)
