@@ -185,10 +185,10 @@ def set_dataset_splits(dataset, splits):
         for split_name, split_index in zip(split_names, splits):
             for data_index, data in enumerate(dataset):
                 if data_index in split_index:
-                    setattr(data, split_name, True)
+                    data[split_name] = True
                     split_counts[split_name] += 1
                 else:
-                    setattr(data, split_name, False)
+                    data[split_name] = False
 
         # Print the count of each split
         for split_name, count in split_counts.items():
