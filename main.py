@@ -74,7 +74,7 @@ def set_dataset_info(dataset):
         if cfg.dataset.task_type == 'classification':
             cfg.share.dim_out = torch.unique(first_graph.y).shape[0]
         else:
-            cfg.share.dim_out = first_graph.y.shape[1]
+            cfg.share.dim_out = first_graph.y.shape[0]
     except Exception:
         cfg.share.dim_out = 1
 
