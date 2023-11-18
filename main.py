@@ -8,7 +8,7 @@ from graphgps.agg_runs import agg_runs
 from graphgps.optimizer.extra_optimizers import ExtendedSchedulerConfig
 
 from torch_geometric.data import DataLoader
-from torch_geometric.graphgym.loader import create_dataset
+from torch_geometric.graphgym.loader import load_dataset
 
 from torch_geometric.graphgym.cmd_args import parse_args
 from torch_geometric.graphgym.config import (cfg, dump_cfg,
@@ -31,6 +31,45 @@ from graphgps.logger import create_logger
 
 torch.backends.cuda.matmul.allow_tf32 = True  # Default False in PyTorch 1.12+
 torch.backends.cudnn.allow_tf32 = True  # Default True
+
+def set_dataset_info(dataset):
+    r"""Set global dataset information.
+
+    Args:
+        dataset: PyG dataset object
+
+    """
+    # Get the first graph in the dataset to infer dimensions
+    first_graph = dataset[0]
+
+    # get dim_in
+    try:
+        cfg.share.dim_in = first_graph.x.shape[1]
+    except Exception:
+        cfg.share.dim_in = 1
+
+    # get dim_out
+    try:
+        if cfg.dataset.task_type == 'classification':
+            cfg.share.dim_out = torch.unique(first_graph.y).shape[0]
+        else:
+            cfg.share.dim_out = first_graph.y.shape[1]
+    except Exception:
+        cfg.share.dim_out = 1
+
+    # hard coded train, val, test spit count
+    cfg.share.num_splits = 3
+
+def create_dataset():
+    r"""Create dataset object.
+
+    Returns: PyG dataset object
+
+    """
+    dataset = load_dataset()
+    set_dataset_info(dataset)
+
+    return dataset
 
 def create_loader():
     """Create data loaders for a PyG Dataset object with specific split attributes.
