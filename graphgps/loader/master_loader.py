@@ -260,9 +260,9 @@ def load_dataset_master(format, name, dataset_dir):
             torch.save(data.EigVecs, evects_path)
 
     # Set standard dataset train/val/test splits
-    if hasattr(dataset, 'split_idxs'):
-        set_dataset_splits(dataset, dataset.split_idxs)
-        delattr(dataset, 'split_idxs')
+    # if hasattr(dataset, 'split_idxs'):
+    #     set_dataset_splits(dataset, dataset.split_idxs)
+    #     delattr(dataset, 'split_idxs')
 
     # Verify or generate dataset train/val/test splits
     # prepare_splits(dataset)
