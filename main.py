@@ -9,6 +9,7 @@ from graphgps.optimizer.extra_optimizers import ExtendedSchedulerConfig
 
 from torch_geometric.loader import DataLoader
 from torch_geometric.graphgym.loader import load_dataset
+from torch_geometric.graphgym import register
 
 from torch_geometric.graphgym.cmd_args import parse_args
 from torch_geometric.graphgym.config import (cfg, dump_cfg,
@@ -31,6 +32,26 @@ from graphgps.logger import create_logger
 
 torch.backends.cuda.matmul.allow_tf32 = True  # Default False in PyTorch 1.12+
 torch.backends.cudnn.allow_tf32 = True  # Default True
+
+def load_dataset():
+    r"""Load dataset objects.
+
+    Returns: PyG dataset object
+
+    """
+    format = cfg.dataset.format
+    name = cfg.dataset.name
+    dataset_dir = cfg.dataset.dir
+    # Try to load customized data format
+    for func in register.loader_dict.values():
+        dataset = func(format, name, dataset_dir)
+        if dataset is not None:
+            print("loading dataset...")
+            print(len(dataset))
+            return dataset
+    else:
+        raise ValueError(f"Unknown data format '{format}'")
+    return dataset
 
 def set_dataset_info(dataset):
     r"""Set global dataset information.
