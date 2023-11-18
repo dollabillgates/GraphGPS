@@ -7,7 +7,7 @@ import graphgps  # noqa, register custom modules
 from graphgps.agg_runs import agg_runs
 from graphgps.optimizer.extra_optimizers import ExtendedSchedulerConfig
 
-from torch_geometric.data import DataLoader
+from torch_geometric.loader import DataLoader
 
 from torch_geometric.graphgym.cmd_args import parse_args
 from torch_geometric.graphgym.config import (cfg, dump_cfg,
