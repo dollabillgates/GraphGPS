@@ -101,9 +101,9 @@ def create_loader():
     dataset = create_dataset()
 
     # Filter datasets based on split attributes
-    train_dataset = [data for data in dataset if hasattr(data, 'train_graph_index') and data.train_graph_index]
-    val_dataset = [data for data in dataset if hasattr(data, 'val_graph_index') and data.val_graph_index]
-    test_dataset = [data for data in dataset if hasattr(data, 'test_graph_index') and data.test_graph_index]
+    train_dataset = [data for data in dataset if data.train_graph_index]
+    val_dataset = [data for data in dataset if data.val_graph_index]
+    test_dataset = [data for data in dataset if data.test_graph_index]
 
     print("Train dataset length:", len(train_dataset))
     print("Validation dataset length:", len(val_dataset))
