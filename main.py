@@ -100,20 +100,20 @@ def create_loader():
     """
     dataset = create_dataset()
 
-    # Filter datasets based on split attributes
-    train_dataset = [data for data in dataset if data.train_graph_index]
-    val_dataset = [data for data in dataset if data.val_graph_index]
-    test_dataset = [data for data in dataset if data.test_graph_index]
+    # Split indices
+    train_indices, val_indices, test_indices = dataset.split_idxs
 
-    print("Train dataset length:", len(train_dataset))
-    print("Validation dataset length:", len(val_dataset))
-    print("Test dataset length:", len(test_dataset))
+    # Create subsets for each split
+    train_dataset = torch.utils.data.Subset(dataset, train_indices)
+    val_dataset = torch.utils.data.Subset(dataset, val_indices)
+    test_dataset = torch.utils.data.Subset(dataset, test_indices)
 
+    # Create data loaders
     train_loader = DataLoader(train_dataset, batch_size=cfg.train.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=cfg.train.batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=cfg.train.batch_size, shuffle=False)
 
-    loaders = [train_loader, val_loader, test_loader]
+    loaders = train_loader, val_loader, test_loader
 
     return loaders
 
