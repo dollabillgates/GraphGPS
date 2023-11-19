@@ -46,60 +46,57 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg, eigen_path):
     # Check if the eigenvalues and eigenvectors are already computed.
     if os.path.exists(evals_path) and os.path.exists(evects_path):
         print(": already computed...")
-        return False
-
-    print(": computing...")
-    # Basic preprocessing of the input graph.
-    if hasattr(data, 'num_nodes'):
-        N = data.num_nodes  # Explicitly given number of nodes, e.g. ogbg-ppa
     else:
-        N = data.x.shape[0]  # Number of nodes, including disconnected nodes.
-    laplacian_norm_type = cfg.posenc_LapPE.eigen.laplacian_norm.lower()
-    if laplacian_norm_type == 'none':
-        laplacian_norm_type = None
+        print(": computing...")
+        # Basic preprocessing of the input graph.
+        if hasattr(data, 'num_nodes'):
+            N = data.num_nodes  # Explicitly given number of nodes, e.g. ogbg-ppa
+        else:
+            N = data.x.shape[0]  # Number of nodes, including disconnected nodes.
+        laplacian_norm_type = cfg.posenc_LapPE.eigen.laplacian_norm.lower()
+        if laplacian_norm_type == 'none':
+            laplacian_norm_type = None
+          
+        # Filter edges based on the non-zero value in the first position of edge_attr: Might break compatibility with datasets other than my custom Alphafold
+        mask = data.edge_attr[:, 0].nonzero().view(-1)
+        filtered_edge_index = data.edge_index[:, mask]
       
-    # Filter edges based on the non-zero value in the first position of edge_attr: Might break compatibility with datasets other than my custom Alphafold
-    mask = data.edge_attr[:, 0].nonzero().view(-1)
-    filtered_edge_index = data.edge_index[:, mask]
-  
-    if is_undirected:
-        undir_edge_index = filtered_edge_index
-    else:
-        undir_edge_index = to_undirected(filtered_edge_index)
-
-    # Eigen values and vectors.
-    evals, evects = None, None
-    if 'LapPE' in pe_types or 'EquivStableLapPE' in pe_types:
-        # Get Laplacian in dense format
-        edge_index, edge_weight = get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)
-        edge_index = edge_index.to(device='cuda')
-        edge_weight = edge_weight.to(device='cuda')
-
-        # Create dense Laplacian matrix
-        L = torch.zeros((N, N), device='cuda')
-        L[edge_index[0], edge_index[1]] = edge_weight
+        if is_undirected:
+            undir_edge_index = filtered_edge_index
+        else:
+            undir_edge_index = to_undirected(filtered_edge_index)
     
-        # Determine max_freqs and eigvec_norm based on PE type
-        if 'LapPE' in pe_types:
-            max_freqs = cfg.posenc_LapPE.eigen.max_freqs
-            eigvec_norm = cfg.posenc_LapPE.eigen.eigvec_norm
-        elif 'EquivStableLapPE' in pe_types:
-            max_freqs = cfg.posenc_EquivStableLapPE.eigen.max_freqs
-            eigvec_norm = cfg.posenc_EquivStableLapPE.eigen.eigvec_norm
+        # Eigen values and vectors.
+        evals, evects = None, None
+        if 'LapPE' in pe_types or 'EquivStableLapPE' in pe_types:
+            # Get Laplacian in dense format
+            edge_index, edge_weight = get_laplacian(undir_edge_index, normalization=laplacian_norm_type, num_nodes=N)
+            edge_index = edge_index.to(device='cuda')
+            edge_weight = edge_weight.to(device='cuda')
     
-        # Compute eigenvalues and eigenvectors
-        evals, evects = torch.linalg.eigh(L)
+            # Create dense Laplacian matrix
+            L = torch.zeros((N, N), device='cuda')
+            L[edge_index[0], edge_index[1]] = edge_weight
+        
+            # Determine max_freqs and eigvec_norm based on PE type
+            if 'LapPE' in pe_types:
+                max_freqs = cfg.posenc_LapPE.eigen.max_freqs
+                eigvec_norm = cfg.posenc_LapPE.eigen.eigvec_norm
+            elif 'EquivStableLapPE' in pe_types:
+                max_freqs = cfg.posenc_EquivStableLapPE.eigen.max_freqs
+                eigvec_norm = cfg.posenc_EquivStableLapPE.eigen.eigvec_norm
+        
+            # Compute eigenvalues and eigenvectors
+            evals, evects = torch.linalg.eigh(L)
+        
+            evals, evects = get_lap_decomp_stats(
+                evals=evals, evects=evects,
+                max_freqs=max_freqs,
+                eigvec_norm=eigvec_norm)
     
-        evals, evects = get_lap_decomp_stats(
-            evals=evals, evects=evects,
-            max_freqs=max_freqs,
-            eigvec_norm=eigvec_norm)
-
-        # Save directly without storing in data object
-        torch.save(evals, evals_path)
-        torch.save(evects, evects_path)
-
-        return True 
+            # Save directly without storing in data object
+            torch.save(evals, evals_path)
+            torch.save(evects, evects_path)
 
     if 'SignNet' in pe_types:
         # Eigen-decomposition with numpy for SignNet.
