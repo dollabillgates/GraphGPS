@@ -290,10 +290,11 @@ def preformat_Alphafold(name):
     # Load and preformat custom Alphafold dataset.
     dataset = Alphafold()
     dataset.name = 'Alphafold'
-    split_dict = dataset.get_idx_split()
-    dataset.split_idxs = [split_dict['train'],
-                          split_dict['valid'],
-                          split_dict['test']]
+    
+    split_file = '/content/drive/MyDrive/protein-DATA/dataset-indices.pt'
+    split_dict = torch.load(split_file)
+
+    dataset.split_idxs = [split_dict['train'], split_dict['valid'], split_dict['test']]
 
     return dataset
   
