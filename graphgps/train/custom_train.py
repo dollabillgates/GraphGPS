@@ -30,7 +30,7 @@ def train_epoch(logger, loader, model, optimizer, scheduler, batch_accumulation)
             true_reshaped = true.unsqueeze(0) if true.dim() == 1 else true
             loss, pred_score = compute_loss(pred, true_reshaped)
             
-            _true = true.detach().to('cpu', non_blocking=True)
+            _true = true_reshaped.detach().to('cpu', non_blocking=True)
             _pred = pred_score.detach().to('cpu', non_blocking=True)
         loss.backward()
         # Parameters update after accumulating gradients for given num. batches.
