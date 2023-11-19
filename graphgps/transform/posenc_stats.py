@@ -45,10 +45,7 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg, eigen_path):
 
     # Check if the eigenvalues and eigenvectors are already computed.
     if os.path.exists(evals_path) and os.path.exists(evects_path):
-        print(": loading...")
-        data.EigVals = torch.load(evals_path)
-        data.EigVecs = torch.load(evects_path)
-      
+        print(": already computed...")
         return False
 
     print(": computing...")
@@ -93,10 +90,14 @@ def compute_posenc_stats(data, pe_types, is_undirected, cfg, eigen_path):
         # Compute eigenvalues and eigenvectors
         evals, evects = torch.linalg.eigh(L)
     
-        data.EigVals, data.EigVecs = get_lap_decomp_stats(
+        evals, evects = get_lap_decomp_stats(
             evals=evals, evects=evects,
             max_freqs=max_freqs,
             eigvec_norm=eigvec_norm)
+
+        # Save directly without storing in data object
+        torch.save(evals, evals_path)
+        torch.save(evects, evects_path)
 
         return True 
 
