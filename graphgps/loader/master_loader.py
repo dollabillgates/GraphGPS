@@ -243,10 +243,10 @@ def load_dataset_master(format, name, dataset_dir):
         graphs_to_save = []
       
         for data in tqdm(dataset):
-        compute_posenc_stats(data, pe_types=pe_enabled_list, is_undirected=is_undirected, cfg=cfg, eigen_path=eigen_path)
-        elapsed = time.perf_counter() - start
-        timestr = time.strftime('%H:%M:%S', time.gmtime(elapsed)) + f'{elapsed:.2f}'[-3:]
-        logging.info(f"Done! Took {timestr}")
+            compute_posenc_stats(data, pe_types=pe_enabled_list, is_undirected=is_undirected, cfg=cfg, eigen_path=eigen_path)
+            elapsed = time.perf_counter() - start
+            timestr = time.strftime('%H:%M:%S', time.gmtime(elapsed)) + f'{elapsed:.2f}'[-3:]
+            logging.info(f"Done! Took {timestr}")
 
     # Set standard dataset train/val/test splits
     # if hasattr(dataset, 'split_idxs'):
