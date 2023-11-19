@@ -9,7 +9,6 @@ class Alphafold(Dataset):
     def __init__(self):
         super().__init__()
         self.root = '/content/drive/MyDrive/protein-DATA/sample_final_eigens'
-        self.split_file = '/content/drive/MyDrive/protein-DATA/dataset-indices.pt'
 
     @property
     def processed_file_names(self) -> List[str]:
@@ -26,7 +25,3 @@ class Alphafold(Dataset):
         data = torch.load(data_path)
 
         return data
-
-    def get_idx_split(self):
-        split_dict = torch.load(self.split_file)
-        return split_dict
