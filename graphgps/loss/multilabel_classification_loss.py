@@ -13,5 +13,6 @@ def multilabel_cross_entropy(pred, true):
                              "'classification_multilabel' task_type.")
         bce_loss = nn.BCEWithLogitsLoss()
         
-        is_labeled = true == true  # Filter our nans.
-        return bce_loss(pred[is_labeled], true[is_labeled].float()), pred
+        # Filter to include only instances where the true label is positive.
+        is_positive = true == 1 
+        return bce_loss(pred[is_positive], true[is_positive].float()), pred
