@@ -217,7 +217,7 @@ def load_dataset_master(format, name, dataset_dir):
     # pre_transform_in_memory(dataset, partial(task_specific_preprocessing, cfg=cfg))
 
     # log_loaded_dataset(dataset, format, name)
-    
+    '''
     # Precompute necessary statistics for positional encodings.
     pe_enabled_list = []
     for key, pecfg in cfg.items():
@@ -247,7 +247,7 @@ def load_dataset_master(format, name, dataset_dir):
             elapsed = time.perf_counter() - start
             timestr = time.strftime('%H:%M:%S', time.gmtime(elapsed)) + f'{elapsed:.2f}'[-3:]
             logging.info(f"Done! Took {timestr}")
-    
+    '''
     # Set standard dataset train/val/test splits
     # if hasattr(dataset, 'split_idxs'):
     #     set_dataset_splits(dataset, dataset.split_idxs)
