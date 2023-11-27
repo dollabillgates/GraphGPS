@@ -1,5 +1,5 @@
 out_dir: results
-metric_best: ap
+metric_best: f1
 wandb:
   use: False
   project: alphafold
