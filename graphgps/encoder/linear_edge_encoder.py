@@ -10,7 +10,7 @@ class LinearEdgeEncoder(torch.nn.Module):
         if cfg.dataset.name in ['MNIST', 'CIFAR10']:
             self.in_dim = 1
         else:
-            self.in_dim = 4
+            self.in_dim = 2
         self.encoder = torch.nn.Linear(self.in_dim, emb_dim)
 
     def forward(self, batch):
