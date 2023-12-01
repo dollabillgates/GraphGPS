@@ -294,7 +294,12 @@ def preformat_Alphafold(name):
     split_file = '/content/drive/MyDrive/protein-DATA/pyg_go_split_indices.pt'
     split_dict = torch.load(split_file)
 
-    dataset.split_idxs = [split_dict['train'], split_dict['valid'], split_dict['test']]
+    file_name_to_index = {name: i for i, name in enumerate(dataset.processed_file_names)}
+    dataset.split_idxs = [
+        [file_name_to_index[name] for name in split_dict['train']],
+        [file_name_to_index[name] for name in split_dict['valid']],
+        [file_name_to_index[name] for name in split_dict['test']]
+    ]
 
     return dataset
   
