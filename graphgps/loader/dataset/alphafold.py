@@ -8,7 +8,7 @@ import re
 class Alphafold(Dataset):
     def __init__(self):
         super().__init__()
-        self.root = '/content/drive/MyDrive/protein-DATA/sample_final'
+        self.root = '/content/drive/MyDrive/protein-DATA/41k_sample_processed_GO'
 
     @property
     def processed_file_names(self) -> List[str]:
