@@ -21,7 +21,7 @@ posenc_EquivStableLapPE:
   eigen:
     laplacian_norm: none
     eigvec_norm: L2
-    max_freqs: 10
+    max_freqs: 16
   raw_norm_type: none
 train:
   mode: custom
