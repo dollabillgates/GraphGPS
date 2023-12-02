@@ -34,8 +34,8 @@ model:
   graph_pooling: max
 gt:
   layer_type: CustomGatedGCN+Performer
-  layers: 8
-  n_heads: 8
+  layers: 5
+  n_heads: 4
   dim_hidden: 8  # `gt.dim_hidden` must match `gnn.dim_inner`
   dropout: 0.0
   attn_dropout: 0.5
