@@ -36,19 +36,19 @@ gt:
   layer_type: CustomGatedGCN+Performer
   layers: 5
   n_heads: 4
-  dim_hidden: 8  # `gt.dim_hidden` must match `gnn.dim_inner`
-  dropout: 0.0
-  attn_dropout: 0.5
+  dim_hidden: 64  # `gt.dim_hidden` must match `gnn.dim_inner`
+  dropout: 0.1
+  attn_dropout: 0.1
   layer_norm: True
   batch_norm: False
 gnn:
   head: default
   layers_pre_mp: 0
   layers_post_mp: 3  # Not used when `gnn.head: san_graph`
-  dim_inner: 8  # `gt.dim_hidden` must match `gnn.dim_inner`
+  dim_inner: 64  # `gt.dim_hidden` must match `gnn.dim_inner`
   batchnorm: False
   act: relu
-  dropout: 0.0
+  dropout: 0.1
   agg: mean
   normalize_adj: False
 optim:
