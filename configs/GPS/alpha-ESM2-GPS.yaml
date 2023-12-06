@@ -11,17 +11,20 @@ dataset:
   task_type: regression
   transductive: False
   node_encoder: True
-  node_encoder_name: LinearNode+EquivStableLapPE
+  node_encoder_name: LinearNode+LapPE
   node_encoder_bn: False
   edge_encoder: True
   edge_encoder_name: LinearEdge
   edge_encoder_bn: False
-posenc_EquivStableLapPE:
+posenc_LapPE:
   enable: True
   eigen:
     laplacian_norm: none
     eigvec_norm: L2
     max_freqs: 16
+  model: DeepSet
+  dim_pe: 32
+  layers: 2
   raw_norm_type: none
 train:
   mode: custom
