@@ -10,7 +10,7 @@ dataset:
   task_type: classification_multilabel
   transductive: False
   node_encoder: True
-  node_encoder_name: LinearNode+EquivStableLapPE
+  node_encoder_name: LinearNode+LapPE
   node_encoder_bn: False
   edge_encoder: True
   edge_encoder_name: LinearEdge
